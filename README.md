@@ -13,3 +13,6 @@ Use check_segmentation (described in analysis.cpp) to test SuperBE output images
 
 Usage: ./superbe <directory to dataset> <N> <R> <DIS> <numMin> <phi> <post> <ID>
 Example: ./superbe ../dataset2014/dataset/baseline 20 60 18.0 4 8 1 test
+
+CSV scripts for each test are stored in /cdwresults
+Image files are temporarily stored in /resimg but deleted by the program
