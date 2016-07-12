@@ -1,0 +1,10 @@
+SuperBE
+
+Dependencies:
+- OpenCV 3.1.0
+- CMake 2.8
+
+Instructions:
+Use SuperBE.cpp to write your test program, instantiating a superbe_engine object (described in superbe_core.cpp).
+The second argument of superbe_engine.process_frame() can be set to 0 in order to visually show the results.
+Use check_segmentation (described in analysis.cpp) to test SuperBE output images against a ground truth.
