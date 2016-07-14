@@ -1,11 +1,5 @@
-#include <opencv2/core.hpp>
-#include <opencv2/imgcodecs.hpp>
-#include <opencv2/imgproc.hpp>
-#include <opencv2/highgui.hpp>
-
 #include <iostream>
 #include <stdlib.h>
-#include <cmath>
 #include <string>
 #include <ctime>
 #include <fstream>
@@ -46,16 +40,18 @@ int main(int argc, char** argv) {
 	fstream fs;
 	String resfile = "cdwresults/"+dirs.back()+ID+".csv";
 	fs.open(resfile.c_str(), fstream::out);
-	fs << "Category,Sequence,File,TP,TN,FP,FN,Rec,Spec,FPR,FNR,PWr,F-Meas,Prec,Overall,N,R,DIS,numMin,phi,post" << "\n";
+	fs << "Category,Sequence,File,TP,TN,FP,FN,Rec,Spec,FPR,FNR,PWr,F-Meas,Prec,procTime,Overall,N,R,DIS,numMin,phi,post" << "\n";
 	fs.close();
 
 	//Initialise memory for tests, avoiding redefinition of large items
 	Mat result, groundtruth;
 	vector<double> metrics;
 	vector<vector<double> > seq_scores;
-	double sums[11];
-	double avgs[11];
+	double sums[12];
+	double avgs[12];
 	int ignorewarning;
+  int start, stop;
+  double procTime;
 
 	for (int seq=0; seq<4; seq++) {
 		String sequence = sequences[seq];
@@ -81,10 +77,13 @@ int main(int argc, char** argv) {
 		engine.initialise_background(filenames[0]);
 		seq_scores.clear();
 
-		//for (int i = 1; i <= filenames.size(); i+=1) {
-  	for (int i = 1500; i <= 1510; i+=1) {
+		for (int i = 1; i <= filenames.size(); i+=1) {
+  	//for (int i = 1690; i <= 1700; i+=1) {
 			//cout << "------------- Image: " << i << "\n";
+      start = clock();
 			result = engine.process_frame(filenames[i-1], -1);
+      stop = clock();
+      procTime = (double)(stop-start)/CLOCKS_PER_SEC;
 
 			//Write image to file with correct name
 			string num_in = SSTR(i);
@@ -97,12 +96,13 @@ int main(int argc, char** argv) {
 				if (result.channels() > 2) cvtColor(result, result, CV_BGR2GRAY);
 				if (groundtruth.channels() > 2) cvtColor(groundtruth, groundtruth, CV_BGR2GRAY);
 				metrics = check_segmentation(result, groundtruth);
+        metrics.push_back(procTime);
 				seq_scores.push_back(metrics);
 
 				//Write result for this image to file
 				fs.open(resfile.c_str(), fstream::out|fstream::app);
 			  fs << dirs.back() << "," << sequence << "," << file_num << ",";
-				for (int k=0; k<11; k++) fs << metrics[k] << ",";
+				for (int k=0; k<12; k++) fs << metrics[k] << ",";
 				fs << 0 << ",";
 				for (int k=2; k<7; k++) fs << argv[k] << ",";
 				fs << argv[7] << "\n";
@@ -110,24 +110,23 @@ int main(int argc, char** argv) {
 			}
 		}
 
-		for (int k=0; k<11; k++) sums[k] = 0; //Reset sums before accumulating
+		for (int k=0; k<12; k++) sums[k] = 0; //Reset sums before accumulating
 		//Calculate aggregate statistics
 		for (int j=0; j<seq_scores.size(); j++) {
-			for (int k=0; k<11; k++) {
+			for (int k=0; k<12; k++) {
 				sums[k] += seq_scores.at(j).at(k);
 			}
 		}
-		cout << sequence << "\n";
-		for (int k=0; k<11; k++) {
-			avgs[k] = sums[k] / seq_scores.size();
-			cout << sums[k] << ", " << avgs[k] << "\n";
+
+		for (int k=0; k<12; k++) {
+			avgs[k] = sums[k] / (double) seq_scores.size();
 		}
 
 		//Write overall result for this sequence to file
 		fs.open(resfile.c_str(), fstream::out|fstream::app);
 		fs << dirs.back() << "," << sequence << "," << "OVERALL" << ",";
 		for (int k=0; k<4; k++) fs << (int)sums[k] << ",";
-		for (int k=4; k<11; k++) fs << avgs[k] << ",";
+		for (int k=4; k<12; k++) fs << avgs[k] << ",";
 		fs << 1 << ",";
 		for (int k=2; k<7; k++) fs << argv[k] << ",";
 		fs << argv[7] << "\n";
