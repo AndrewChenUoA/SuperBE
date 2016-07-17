@@ -2,6 +2,10 @@
 
 //Analysis functions ported from Python
 vector<double> check_segmentation(Mat input_a, Mat groundtruth) {
+
+	CV_Assert(input_a.depth() == CV_8U);
+	CV_Assert(groundtruth.depth() == CV_8U);
+
 	int test_height = input_a.rows;
 	int test_width = input_a.cols;
 
@@ -12,14 +16,12 @@ vector<double> check_segmentation(Mat input_a, Mat groundtruth) {
 	uchar test_val, gt_val;
 
 	for(int i=0; i<test_height; i++) {
-    int* pi = input_a.ptr<int>(i);
-		int* gi = groundtruth.ptr<int>(i);
     for (int j=0; j<test_width; j++) {
-			test_val = pi[j];
-			gt_val = gi[j];
+			test_val = input_a.at<uchar>(i,j);
+			gt_val = groundtruth.at<uchar>(i,j);
 			if (gt_val == 50) gt_val = 255; //Turn shadows into "movement"
 
-			if (gt_val != 85 && gt_val != 170) {
+			if (gt_val == 0 || gt_val == 255) {
 				if (test_val == gt_val) {
 					if (test_val != 0) { //Correct
 						tp += 1;

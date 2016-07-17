@@ -19,17 +19,6 @@ int main(int argc, char** argv) {
 		return -1;
 	}
 
-	superbe_engine engine;
-  String directory = argv[1];
-
-  if (argc >= 8) {
-    engine.set_init(atoi(argv[2]),atoi(argv[3]),atof(argv[4]),atoi(argv[5]),atoi(argv[6]), atoi(argv[7]));
-  } else if (argc == 7) {
-		engine.set_init(atoi(argv[2]),atoi(argv[3]),atof(argv[4]),atoi(argv[5]),atoi(argv[6]), 1);
-	} else {
-		engine.set_init(20, 60, 18.0, 4, 16, 1);
-	}
-
   String categories[] = {"badWeather", "baseline", "cameraJitter", "dynamicBackground", "intermittentObjectMotion", "lowFramerate", "nightVideos", "PTZ", "shadow", "thermal", "turbulence"};
   vector<vector<String> > sequences;
   String badWeather[] = {"blizzard", "skating", "snowFall", "wetSnow"};
@@ -55,7 +44,7 @@ int main(int argc, char** argv) {
   sequences.push_back(vector<String> (thermal, thermal+sizeof(thermal) / sizeof(thermal[0])));
   sequences.push_back(vector<String> (turbulence, turbulence+sizeof(turbulence) / sizeof(turbulence[0])));
 
-  for (int cat=0; cat<=11; cat++) {
+  for (int cat=0; cat<=10; cat++) {
     String category = categories[cat];
   	vector<String> filenames;
 
@@ -80,6 +69,18 @@ int main(int argc, char** argv) {
 
   	for (int seq=0; seq<sequences[cat].size(); seq++) {
   		String sequence = sequences[cat][seq];
+
+      superbe_engine engine;
+      String directory = argv[1];
+
+      if (argc >= 8) {
+        engine.set_init(atoi(argv[2]),atoi(argv[3]),atof(argv[4]),atoi(argv[5]),atoi(argv[6]), atoi(argv[7]));
+      } else if (argc == 7) {
+        engine.set_init(atoi(argv[2]),atoi(argv[3]),atof(argv[4]),atoi(argv[5]),atoi(argv[6]), 1);
+      } else {
+        engine.set_init(20, 60, 18.0, 4, 16, 1);
+      }
+
   		//String write_dir = "resimg/"+ID+sequence+"/";
   		//command = "mkdir " + write_dir;
   		//ignorewarning = system(command.c_str());
