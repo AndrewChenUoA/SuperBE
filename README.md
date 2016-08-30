@@ -14,7 +14,7 @@ The second argument of superbe_engine.process_frame() can be set to 0 in order t
 
 Use check_segmentation (described in analysis.cpp) to test SuperBE output images against a ground truth.
 
-Usage: ./superbe <directory to dataset> <N> <R> <DIS> <numMin> <phi> <post> <ID>
+Usage: ./superbe [directory to dataset] [N] [R] [DIS] [numMin] [phi] [post] [ID]
 
 Example: ./superbe ../dataset2014/dataset/baseline 20 60 18.0 4 8 1 test
 
