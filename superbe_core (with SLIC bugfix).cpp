@@ -70,10 +70,15 @@ void superbe_engine::initialise_background(String filename) {
     numSegments = slic_engine->getNumberOfSuperpixels();
     //cout << "Number of segments: " << numSegments << "\n";
 
-    slic_engine->getLabels(segments);
+    slic_engine->getLabels(segments);  
     //Note: original slic.cpp must be fixed for this to work
     //https://github.com/Itseez/opencv_contrib/pull/483/files
-    slic_engine->getLabelContourMask(edges);
+    //Hack fix for OpenCV 3.1.0
+    Mat temp;
+    slic_engine->getLabelContourMask(temp);
+    temp.convertTo(edges, CV_8UC1);
+    edges.setTo(255,edges==0);
+    edges.setTo(0, edges==1);
     slic_engine.release(); //Release memory
 
     neighbours.clear();

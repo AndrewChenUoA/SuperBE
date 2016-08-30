@@ -4,20 +4,20 @@
 //Proper histogram equalization for colour images
 Mat equalizeIntensity(const Mat& inputImage)
 {
-	if (inputImage.channels() >= 3)	{
-		Mat ycrcb;
-		cvtColor(inputImage, ycrcb, CV_BGR2YCrCb);
-		vector<Mat> channels;
-		split(ycrcb, channels);
+    if (inputImage.channels() >= 3)	{
+        Mat ycrcb;
+        cvtColor(inputImage, ycrcb, CV_BGR2YCrCb);
+        vector<Mat> channels;
+        split(ycrcb, channels);
 
-		equalizeHist(channels[0], channels[0]);
-		Mat result;
-		merge(channels, ycrcb);
-		cvtColor(ycrcb, result, CV_YCrCb2BGR);
+        equalizeHist(channels[0], channels[0]);
+        Mat result;
+        merge(channels, ycrcb);
+        cvtColor(ycrcb, result, CV_YCrCb2BGR);
 
-		return result;
-	}
-	return Mat();
+        return result;
+    }
+    return Mat();
 }
 
 //calcCovarMatrix expects single-dimension values
@@ -46,7 +46,7 @@ void Cholesky( const Mat& A, Mat& S )
     for( i = 0; i < dim; i++ )
     {
         for( j = 0; j < i; j++ )
-            S.at<float>(i,j) = 0.f;
+        S.at<float>(i,j) = 0.f;
 
         float sum = 0.f;
         for( k = 0; k < i; k++ )
@@ -62,7 +62,7 @@ void Cholesky( const Mat& A, Mat& S )
         {
             sum = 0;
             for( k = 0; k < i; k++ )
-                sum += S.at<float>(k, i) * S.at<float>(k, j);
+            sum += S.at<float>(k, i) * S.at<float>(k, j);
 
             S.at<float>(i, j) = (A.at<float>(i, j) - sum)*ival;
         }
