@@ -2,20 +2,10 @@
 
 //Analysis functions ported from Python
 vector<double> check_segmentation(Mat input_a, Mat groundtruth) {
-<<<<<<< HEAD
-=======
-
-	CV_Assert(input_a.depth() == CV_8U);
-	CV_Assert(groundtruth.depth() == CV_8U);
-
-	int test_height = input_a.rows;
-	int test_width = input_a.cols;
->>>>>>> a7368746134c1b96226bca019dfb19519b61d286
 
     CV_Assert(input_a.depth() == CV_8U);
     CV_Assert(groundtruth.depth() == CV_8U);
 
-<<<<<<< HEAD
     int test_height = input_a.rows;
     int test_width = input_a.cols;
 
@@ -47,29 +37,6 @@ vector<double> check_segmentation(Mat input_a, Mat groundtruth) {
                 }
             }
         }
-=======
-	for(int i=0; i<test_height; i++) {
-    for (int j=0; j<test_width; j++) {
-			test_val = input_a.at<uchar>(i,j);
-			gt_val = groundtruth.at<uchar>(i,j);
-			if (gt_val == 50) gt_val = 255; //Turn shadows into "movement"
-
-			if (gt_val == 0 || gt_val == 255) {
-				if (test_val == gt_val) {
-					if (test_val != 0) { //Correct
-						tp += 1;
-					} else {
-						tn += 1;
-					}
-				} else { //Incorrect
-					if (test_val != 0) {
-						fp += 1;
-					} else {
-						fn += 1;
-					}
-				}
-			}
->>>>>>> a7368746134c1b96226bca019dfb19519b61d286
     }
 
     return calc_metrics(tp, tn, fp, fn);
