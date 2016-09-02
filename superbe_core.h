@@ -13,6 +13,7 @@ using namespace std;
 using namespace cv::ximgproc;
 
 class superbe_engine {
+private:
     int N, R;
     double DIS;
     int numMin, phi;
@@ -39,10 +40,11 @@ class superbe_engine {
     //Memory placeholder for random numbers
     int randint, rand_neigh, rand_bgmodel;
 
-public:
-    void set_init(int, int, double, int, int, int);
     Mat filter_equalise();
     void process_vals(Mat);
+    void set_init(int, int, double, int, int, int);
+
+public:
     void initialise_background(String);
     Mat process_frame(String, int);
 };

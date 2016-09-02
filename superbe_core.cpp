@@ -64,7 +64,6 @@ void superbe_engine::initialise_background(String filename) {
 
     //Pass the image through SLIC - just do this once per video sequence!
     //Superpixel size needs to be small enough, even when objects are small due to perspective distortion
-    //Investigate making this SLIC again rather than SLICO
     Ptr<SuperpixelSLIC> slic_engine = createSuperpixelSLIC(filt_img, SLICO); //SLICO has no parameters
     slic_engine->iterate();
     numSegments = slic_engine->getNumberOfSuperpixels();
@@ -83,10 +82,11 @@ void superbe_engine::initialise_background(String filename) {
     for(int i=1; i<height-1; i++) {
         int* pi = segments.ptr<int>(i);
         for (int j=1; j<width-1; j++) {
-            neighbours.at(pi[j]).push_back(segments.at<int>(i-1,j));
-            neighbours.at(pi[j]).push_back(segments.at<int>(i,j-1));
-            neighbours.at(pi[j]).push_back(segments.at<int>(i+1,j));
-            neighbours.at(pi[j]).push_back(segments.at<int>(i,j+1));
+            //If neighbouring superpixel label is not the same as the current superpixel label, store it in the neighbour list
+            if (segments.at<int>(i-1,j) != segments.at<int>(i,j)) neighbours.at(pi[j]).push_back(segments.at<int>(i-1,j));
+            if (segments.at<int>(i,j-1) != segments.at<int>(i,j)) neighbours.at(pi[j]).push_back(segments.at<int>(i,j-1));
+            if (segments.at<int>(i+1,j) != segments.at<int>(i,j)) neighbours.at(pi[j]).push_back(segments.at<int>(i+1,j));
+            if (segments.at<int>(i,j+1) != segments.at<int>(i,j)) neighbours.at(pi[j]).push_back(segments.at<int>(i,j+1));
         }
     }
 
@@ -96,7 +96,7 @@ void superbe_engine::initialise_background(String filename) {
     for(int i=0; i<numSegments; i++) {
         sort(neighbours.at(i).begin(), neighbours.at(i).end());
         neighbours.at(i).erase(unique(neighbours.at(i).begin(), neighbours.at(i).end()), neighbours.at(i).end());
-        for (int j=0; j<3; j++) neighbours.at(i).push_back(i); //Add self to list to increase chances of adding self-values in (reasonably arbitrary)
+        neighbours.at(i).push_back(i); //Add self to list to increase chances of adding self-values in
     }
 
     //Resize vectors of pixel averages and covariance matrices for number of superpixels

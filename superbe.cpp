@@ -19,6 +19,13 @@ int main(int argc, char** argv) {
         return -1;
     }
 
+    String directory = argv[1];
+
+    int post = 1;
+    if (argc >= 8) {
+        post = atoi(argv[7]);
+    }
+
     String categories[] = {"badWeather", "baseline", "cameraJitter", "dynamicBackground", "intermittentObjectMotion", "lowFramerate", "nightVideos", "PTZ", "shadow", "thermal", "turbulence"};
     vector<vector<String> > sequences;
     String badWeather[] = {"blizzard", "skating", "snowFall", "wetSnow"};
@@ -44,7 +51,7 @@ int main(int argc, char** argv) {
     sequences.push_back(vector<String> (thermal, thermal+sizeof(thermal) / sizeof(thermal[0])));
     sequences.push_back(vector<String> (turbulence, turbulence+sizeof(turbulence) / sizeof(turbulence[0])));
 
-    for (int cat=0; cat<=10; cat++) {
+    for (int cat=0; cat<=sequences.size(); cat++) {
         String category = categories[cat];
         vector<String> filenames;
 
@@ -70,18 +77,16 @@ int main(int argc, char** argv) {
         for (int seq=0; seq<sequences[cat].size(); seq++) {
             String sequence = sequences[cat][seq];
 
+            //Initialise engine for each sequence with command line arguments
             superbe_engine engine;
-            String directory = argv[1];
-
-            if (argc >= 8) {
-                engine.set_init(atoi(argv[2]),atoi(argv[3]),atof(argv[4]),atoi(argv[5]),atoi(argv[6]), atoi(argv[7]));
-            } else if (argc == 7) {
-                engine.set_init(atoi(argv[2]),atoi(argv[3]),atof(argv[4]),atoi(argv[5]),atoi(argv[6]), 1);
-            } else {
+            if (argc < 7) {
                 printf(("\nUsage: %s <read directory> <N> <R> <DIS> <numMin> <phi> <post> <ID>\n"), argv[0]);
                 return -1;
+            } else {
+                engine.set_init(atoi(argv[2]),atoi(argv[3]),atof(argv[4]),atoi(argv[5]),atoi(argv[6]), post);
             }
-
+            
+            //Commented out code is if you want to save the result masks
             //String write_dir = "resimg/"+ID+sequence+"/";
             //command = "mkdir " + write_dir;
             //ignorewarning = system(command.c_str());
@@ -135,7 +140,7 @@ int main(int argc, char** argv) {
                     for (int k=0; k<12; k++) fs << metrics[k] << ",";
                     fs << 0 << ",";
                     for (int k=2; k<7; k++) fs << argv[k] << ",";
-                    fs << argv[7] << "\n";
+                    fs << post << "\n";
                     fs.close();
                 }
             }
