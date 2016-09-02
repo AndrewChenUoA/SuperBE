@@ -184,7 +184,7 @@ Mat superbe_engine::process_frame(String filename, int waitTime) {
             randint = rand() % (phi-1);
             if (randint == 0) {
                 if (neighbours.at(i).size() != 0) {
-                    rand_neigh = neighbouts.at(i).at(rand() % (neighbours.at(i).size()-1));
+                    rand_neigh = neighbours.at(i).at(rand() % (neighbours.at(i).size()-1));
                     rand_bgmodel = rand() % (N-1);
                     avgs.at(i).copyTo(bgavgs.at(rand_neigh).at(rand_bgmodel));
                     covars.at(i).copyTo(bgcovars.at(rand_neigh).at(rand_bgmodel));

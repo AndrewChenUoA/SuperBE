@@ -42,9 +42,9 @@ private:
 
     Mat filter_equalise();
     void process_vals(Mat);
-    void set_init(int, int, double, int, int, int);
 
 public:
+    void set_init(int, int, double, int, int, int);
     void initialise_background(String);
     Mat process_frame(String, int);
 };

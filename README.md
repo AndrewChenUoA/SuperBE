@@ -12,7 +12,7 @@ Instructions:
 - The second argument of superbe_engine.process_frame() can be set to 0 in order to visually show the results with the user pressing any key to progress, or -1 to not show anything.
 - Use check_segmentation (described in analysis.cpp) to test SuperBE output images against a ground truth.
 
-For test purposes with the CDW2014 dataset:
+For test purposes with the CDW2014 dataset (http://wordpress-jodoin.dmi.usherb.ca/dataset2014/):
 
 Usage: ./superbe [directory to dataset] [N] [R] [DIS] [numMin] [phi] [post] [ID]
 
