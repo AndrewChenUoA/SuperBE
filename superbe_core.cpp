@@ -57,7 +57,11 @@ void superbe_engine::process_vals(Mat filt_img) {
 }
 
 void superbe_engine::initialise_background(String filename) {
-    image = imread(filename);
+    initialise_background(imread(filename));
+}
+
+void superbe_engine::initialise_background(Mat image_in) {
+    image = image_in;
     height = image.rows;
     width = image.cols;
     Mat filt_img = filter_equalise();
@@ -134,7 +138,11 @@ void superbe_engine::initialise_background(String filename) {
 }
 
 Mat superbe_engine::process_frame(String filename, int waitTime) {
-    image = imread(filename);
+    return process_frame(imread(filename), waitTime);
+}
+
+Mat superbe_engine::process_frame(Mat image_in, int waitTime) {
+    image = image_in;
     Mat filt_img = filter_equalise();
     image.copyTo(segmented); //Help with visualising results
     segmented.setTo(Scalar(0, 0, 255), edges);
@@ -161,10 +169,13 @@ Mat superbe_engine::process_frame(String filename, int waitTime) {
             Cholesky(bgcovars.at(i).at(index), B);
             Cholesky((covars.at(i) + bgcovars.at(i).at(index))*0.5, C);
             dissimilarity = abs(2*log(determinant(C)) - (log(determinant(A)) - log(determinant(B))));
+            //dissimilarity = log( determinant((covars.at(i)+bgcovars.at(i).at(index)) * 0.5) - 0.5*log(determinant(covars.at(i)*bgcovars.at(i).at(index))) );
 
             //Check if enough similar samples have been found (if so, break)
             //If the colour covariance and the mean (LAB) colours are similar enough, it counts towards the background
+            //if(euc_dist < R && (dissimilarity < DIS || !isfinite(dissimilarity))) {
             if(euc_dist < R && dissimilarity) {
+                //if(dissimilarity < DIS) {
                 count++;
             }
             index++;
