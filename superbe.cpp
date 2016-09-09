@@ -14,18 +14,13 @@
 #include "superbe_core.h"
 
 int main(int argc, char** argv) {
-    if (argc < 2) {
+    if (argc < 7) {
         printf(("\nUsage: %s <read directory> <N> <R> <DIS> <numMin> <phi> <post> <ID>\n"), argv[0]);
         return -1;
     }
 
     String directory = argv[1];
-
-    int post = 1;
-    if (argc >= 8) {
-        post = atoi(argv[7]);
-    }
-
+    
     String categories[] = {"badWeather", "baseline", "cameraJitter", "dynamicBackground", "intermittentObjectMotion", "lowFramerate", "nightVideos", "PTZ", "shadow", "thermal", "turbulence"};
     vector<vector<String> > sequences;
     String badWeather[] = {"blizzard", "skating", "snowFall", "wetSnow"};
@@ -79,12 +74,7 @@ int main(int argc, char** argv) {
 
             //Initialise engine for each sequence with command line arguments
             superbe_engine engine;
-            if (argc < 7) {
-                printf(("\nUsage: %s <read directory> <N> <R> <DIS> <numMin> <phi> <post> <ID>\n"), argv[0]);
-                return -1;
-            } else {
-                engine.set_init(atoi(argv[2]),atoi(argv[3]),atof(argv[4]),atoi(argv[5]),atoi(argv[6]), post);
-            }
+            engine.set_init(atoi(argv[2]),atoi(argv[3]),atof(argv[4]),atoi(argv[5]),atoi(argv[6]),atoi(argv[7]));
             
             //Commented out code is if you want to save the result masks
             //String write_dir = "resimg/"+ID+sequence+"/";
@@ -140,7 +130,7 @@ int main(int argc, char** argv) {
                     for (int k=0; k<12; k++) fs << metrics[k] << ",";
                     fs << 0 << ",";
                     for (int k=2; k<7; k++) fs << argv[k] << ",";
-                    fs << post << "\n";
+                    fs << argv[7] << "\n";
                     fs.close();
                 }
             }
