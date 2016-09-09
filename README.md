@@ -19,3 +19,7 @@ Usage: ./superbe [directory to dataset] [N] [R] [DIS] [numMin] [phi] [post] [ID]
 Example: ./superbe ../dataset2014/dataset/ 20 60 18.0 4 8 1 test_ID
 
 CSV result files for each test are stored in /cdwresults. By default, the storage of the output masks is commented out.
+
+superbe_webcam allows you to build a working demonstration that uses your computer's camera. Modify CMakeLists.txt to compile superbe_webcam instead, and call (example parameter settings may need to be modified):
+
+./superbe_webcam 20 20 8.0 2 16 1

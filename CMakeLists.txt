@@ -1,0 +1,8 @@
+cmake_minimum_required(VERSION 2.8)
+project( superbe )
+find_package( OpenCV REQUIRED )
+include_directories( ${OpenCV_INCLUDE_DIRS} )
+SET(CMAKE_CXX_FLAGS "-O3")
+SET(CMAKE_C_FLAGS "-O3")
+add_executable( superbe superbe.cpp helper.cpp analysis.cpp superbe_core.cpp)
+target_link_libraries( superbe ${OpenCV_LIBS} jpeg )
