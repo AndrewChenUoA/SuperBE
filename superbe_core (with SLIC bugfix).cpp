@@ -57,17 +57,21 @@ void superbe_engine::process_vals(Mat filt_img) {
 }
 
 void superbe_engine::initialise_background(String filename) {
-    image = imread(filename);
+    initialise_background(imread(filename));
+}
+
+void superbe_engine::initialise_background(Mat image_in) {
+    image = image_in;
     height = image.rows;
     width = image.cols;
     Mat filt_img = filter_equalise();
 
     //Pass the image through SLIC - just do this once per video sequence!
     //Superpixel size needs to be small enough, even when objects are small due to perspective distortion
-    //Investigate making this SLIC again rather than SLICO
     Ptr<SuperpixelSLIC> slic_engine = createSuperpixelSLIC(filt_img, SLICO); //SLICO has no parameters
     slic_engine->iterate();
     numSegments = slic_engine->getNumberOfSuperpixels();
+    //cout << "Number of segments: " << numSegments << "\n";
 
     slic_engine->getLabels(segments);  
     //Note: original slic.cpp must be fixed for this to work
@@ -87,10 +91,11 @@ void superbe_engine::initialise_background(String filename) {
     for(int i=1; i<height-1; i++) {
         int* pi = segments.ptr<int>(i);
         for (int j=1; j<width-1; j++) {
-            neighbours.at(pi[j]).push_back(segments.at<int>(i-1,j));
-            neighbours.at(pi[j]).push_back(segments.at<int>(i,j-1));
-            neighbours.at(pi[j]).push_back(segments.at<int>(i+1,j));
-            neighbours.at(pi[j]).push_back(segments.at<int>(i,j+1));
+            //If neighbouring superpixel label is not the same as the current superpixel label, store it in the neighbour list
+            if (segments.at<int>(i-1,j) != segments.at<int>(i,j)) neighbours.at(pi[j]).push_back(segments.at<int>(i-1,j));
+            if (segments.at<int>(i,j-1) != segments.at<int>(i,j)) neighbours.at(pi[j]).push_back(segments.at<int>(i,j-1));
+            if (segments.at<int>(i+1,j) != segments.at<int>(i,j)) neighbours.at(pi[j]).push_back(segments.at<int>(i+1,j));
+            if (segments.at<int>(i,j+1) != segments.at<int>(i,j)) neighbours.at(pi[j]).push_back(segments.at<int>(i,j+1));
         }
     }
 
@@ -100,7 +105,7 @@ void superbe_engine::initialise_background(String filename) {
     for(int i=0; i<numSegments; i++) {
         sort(neighbours.at(i).begin(), neighbours.at(i).end());
         neighbours.at(i).erase(unique(neighbours.at(i).begin(), neighbours.at(i).end()), neighbours.at(i).end());
-        for (int j=0; j<3; j++) neighbours.at(i).push_back(i); //Add self to list to increase chances of adding self-values in (reasonably arbitrary)
+        neighbours.at(i).push_back(i); //Add self to list to increase chances of adding self-values in
     }
 
     //Resize vectors of pixel averages and covariance matrices for number of superpixels
@@ -138,7 +143,11 @@ void superbe_engine::initialise_background(String filename) {
 }
 
 Mat superbe_engine::process_frame(String filename, int waitTime) {
-    image = imread(filename);
+    return process_frame(imread(filename), waitTime);
+}
+
+Mat superbe_engine::process_frame(Mat image_in, int waitTime) {
+    image = image_in;
     Mat filt_img = filter_equalise();
     image.copyTo(segmented); //Help with visualising results
     segmented.setTo(Scalar(0, 0, 255), edges);
@@ -168,10 +177,9 @@ Mat superbe_engine::process_frame(String filename, int waitTime) {
             //dissimilarity = log( determinant((covars.at(i)+bgcovars.at(i).at(index)) * 0.5) - 0.5*log(determinant(covars.at(i)*bgcovars.at(i).at(index))) );
 
             //Check if enough similar samples have been found (if so, break)
-            //If the colour covariance and the mean (LAB) colours are similar enough, it counts towards the background
-            //if(euc_dist < R && (dissimilarity < DIS || !isfinite(dissimilarity))) {
-            if(euc_dist < R && dissimilarity) {
-                //if(dissimilarity < DIS) {
+            //If the colour covariance and the mean colours are similar enough, it counts towards the background
+            if(euc_dist < R && (dissimilarity < DIS || !isfinite(dissimilarity))) {
+            //if(euc_dist < R && dissimilarity) {
                 count++;
             }
             index++;
@@ -188,7 +196,7 @@ Mat superbe_engine::process_frame(String filename, int waitTime) {
             randint = rand() % (phi-1);
             if (randint == 0) {
                 if (neighbours.at(i).size() != 0) {
-                    rand_neigh = neighbouts.at(i).at(rand() % (neighbours.at(i).size()-1));
+                    rand_neigh = neighbours.at(i).at(rand() % (neighbours.at(i).size()-1));
                     rand_bgmodel = rand() % (N-1);
                     avgs.at(i).copyTo(bgavgs.at(rand_neigh).at(rand_bgmodel));
                     covars.at(i).copyTo(bgcovars.at(rand_neigh).at(rand_bgmodel));

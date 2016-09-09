@@ -172,10 +172,9 @@ Mat superbe_engine::process_frame(Mat image_in, int waitTime) {
             //dissimilarity = log( determinant((covars.at(i)+bgcovars.at(i).at(index)) * 0.5) - 0.5*log(determinant(covars.at(i)*bgcovars.at(i).at(index))) );
 
             //Check if enough similar samples have been found (if so, break)
-            //If the colour covariance and the mean (LAB) colours are similar enough, it counts towards the background
-            //if(euc_dist < R && (dissimilarity < DIS || !isfinite(dissimilarity))) {
-            if(euc_dist < R && dissimilarity) {
-                //if(dissimilarity < DIS) {
+            //If the colour covariance and the mean colours are similar enough, it counts towards the background
+            if(euc_dist < R && (dissimilarity < DIS || !isfinite(dissimilarity))) {
+            //if(euc_dist < R && dissimilarity) {
                 count++;
             }
             index++;
