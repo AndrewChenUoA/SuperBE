@@ -1,6 +1,6 @@
 #include "superbe_core.h"
 
-void superbe_engine::set_init(int i_N, int i_R, double i_DIS, int i_numMin, int i_phi, int i_post) {
+void superbe_engine::set_init(int i_N, int i_R, int i_DIS, int i_numMin, int i_phi, int i_post) {
     N = i_N;
     R = i_R;
     DIS = i_DIS;
@@ -169,8 +169,8 @@ Mat superbe_engine::process_frame(Mat image_in, int waitTime) {
 
             //Check if enough similar samples have been found (if so, break)
             //If the mean colours and std deviations are similar enough, it counts towards the background
-            //if(euc_avg < R && euc_devs < DIS) {
-            if(euc_avg < R) {
+            if(euc_avg < R && euc_devs < DIS) {
+            //if(euc_avg < R) {
                 count++;
             }
             index++;

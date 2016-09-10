@@ -16,10 +16,7 @@ using namespace cv::ximgproc;
 
 class superbe_engine {
 private:
-    int N, R;
-    double DIS;
-    int numMin, phi;
-    int post;
+    int N, R, DIS, numMin, phi, post;
     int numSegments, height, width;
 
     int frameNumber;
