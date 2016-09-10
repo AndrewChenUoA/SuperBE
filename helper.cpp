@@ -32,42 +32,19 @@ Mat castVec3btoMat(vector<Vec3b> input) {
     return output;
 }
 
-//Calculate Cholesky Decomposition/Factorisation
-//https://github.com/Itseez/opencv/blob/master/modules/ml/src/inner_functions.cpp
-void Cholesky( const Mat& A, Mat& S )
+//https://github.com/opencv/opencv/blob/master/modules/ml/src/inner_functions.cpp
+//Modified from above to produce lower triangular matrix S
+void Cholesky(const Mat& A, Mat& S)
 {
     CV_Assert(A.type() == CV_32F);
 
-    int dim = A.rows;
-    S.create(dim, dim, CV_32F);
-
-    int i, j, k;
-
-    for( i = 0; i < dim; i++ )
-    {
-        for( j = 0; j < i; j++ )
-        S.at<float>(i,j) = 0.f;
-
-        float sum = 0.f;
-        for( k = 0; k < i; k++ )
-        {
-            float val = S.at<float>(k,i);
-            sum += val*val;
-        }
-
-        S.at<float>(i,i) = std::sqrt(std::max(A.at<float>(i,i) - sum, 0.f));
-        float ival = 1.f/S.at<float>(i, i);
-
-        for( j = i + 1; j < dim; j++ )
-        {
-            sum = 0;
-            for( k = 0; k < i; k++ )
-            sum += S.at<float>(k, i) * S.at<float>(k, j);
-
-            S.at<float>(i, j) = (A.at<float>(i, j) - sum)*ival;
-        }
-    }
+    S = A.clone();
+    cv::Cholesky ((float*)S.ptr(),S.step, S.rows,NULL, 0, 0);
+    for (int i=0;i<S.rows;i++)
+        for (int j=i+1;j<S.rows;j++)
+            S.at<float>(i,j)=0;
 }
+
 
 //For splitting the directory URL
 //https://stackoverflow.com/questions/236129/split-a-string-in-c

@@ -21,36 +21,29 @@ Mat superbe_engine::filter_equalise() {
 
 void superbe_engine::process_vals(Mat filt_img) {
     //Reset these containers because we are appending, not overwriting
-    segment_pixels.clear();
     segment_pixvals.clear();
-    segment_pixels.resize(numSegments); //An array of groups, each element is a vector of pixel positions
     segment_pixvals.resize(numSegments); //An array of groups, each element is a vector of pixel values
 
     //Build arrays of pixel positions and pixel values sorted by groups
     for(int i=0; i<height; i++) {
         int* pi = segments.ptr<int>(i);
         for(int j=0; j<width; j++) {
-            Point loc = Point(j, i); //For some reason this has to be the other way around, not sure why!
-            segment_pixels[pi[j]].push_back(loc); //Append the (x,y) location of the pixel to the appropriate group
             Vec3b vals = filt_img.at<Vec3b>(i, j);
             segment_pixvals[pi[j]].push_back(vals); //Append the (B,G,R) values of the pixel to the appropriate group
         }
     }
 
-    //Calculate average and covariance matrix for each superpixel and store
-    Mat vec3bplaceholder;
+    //Calculate average and std deviation for each superpixel and store
     for(int i=0; i<numSegments; i++) {
         if (segment_pixvals[i].size() != 0) {
-            vec3bplaceholder = castVec3btoMat(segment_pixvals[i]);
-            calcCovarMatrix(vec3bplaceholder, covars[i], avgs[i], CV_COVAR_NORMAL | CV_COVAR_ROWS, CV_32F);
-            covars[i] = covars[i]/(vec3bplaceholder.rows-1); //Normalise by 1/(N-1)
+            meanStdDev(segment_pixvals[i], avgs[i], devs[i]);
         } else { //For whatever reason, no elements in the superpixel (so can't calculate)
             if (frameNumber != 1) { //Fill with most recent values
                 bgavgs.at(i).at(N-1).copyTo(avgs.at(i));
-                bgcovars.at(i).at(N-1).copyTo(covars.at(i));
+                bgdevs.at(i).at(N-1).copyTo(devs.at(i));
             } else { //No background model initialised yet, copy from a neighbour
                 avgs.at(i-1).copyTo(avgs.at(i));
-                covars.at(i-1).copyTo(covars.at(i));
+                devs.at(i-1).copyTo(devs.at(i));
             }
         }
     }
@@ -76,7 +69,12 @@ void superbe_engine::initialise_background(Mat image_in) {
     slic_engine->getLabels(segments);
     //Note: original slic.cpp must be fixed for this to work
     //https://github.com/Itseez/opencv_contrib/pull/483/files
-    slic_engine->getLabelContourMask(edges);
+    //Hack fix for OpenCV 3.1.0
+    Mat temp;
+    slic_engine->getLabelContourMask(temp);
+    temp.convertTo(edges, CV_8UC1);
+    edges.setTo(255,edges==0);
+    edges.setTo(0, edges==1);
     slic_engine.release(); //Release memory
 
     neighbours.clear();
@@ -103,27 +101,37 @@ void superbe_engine::initialise_background(Mat image_in) {
         neighbours.at(i).push_back(i); //Add self to list to increase chances of adding self-values in
     }
 
-    //Resize vectors of pixel averages and covariance matrices for number of superpixels
+    //Resize vectors of pixel averages and std deviations for number of superpixels
     avgs.resize(numSegments);
-    covars.resize(numSegments);
+    devs.resize(numSegments);
 
-    process_vals(filt_img); //Calculate means and covariance matrices
+    process_vals(filt_img); //Calculate means and std deviations
+    segment_pixels.clear();
+    segment_pixels.resize(numSegments); //An array of groups, each element is a vector of pixel positions
+    //Build arrays of pixel positions and pixel values sorted by groups
+    for(int i=0; i<height; i++) {
+        int* pi = segments.ptr<int>(i);
+        for(int j=0; j<width; j++) {
+            Point loc = Point(j, i); //For some reason this has to be the other way around, not sure why!
+            segment_pixels[pi[j]].push_back(loc); //Append the (x,y) location of the pixel to the appropriate group
+        }
+    }
 
     bgavgs.resize(numSegments); //Allocate space for background model
-    bgcovars.resize(numSegments);
+    bgdevs.resize(numSegments);
 
     for (int i=0; i<numSegments; i++) {
         bgavgs.at(i).resize(N);
-        bgcovars.at(i).resize(N);
+        bgdevs.at(i).resize(N);
         for (int j=0; j<N; j++) {
             if (neighbours.at(i).size() != 0) {
                 //Select a random neighbouring superpixel (including potentially, self)
                 randint = rand() % (neighbours.at(i).size());
                 avgs.at(neighbours.at(i)[randint]).copyTo(bgavgs.at(i).at(j));
-                covars.at(neighbours.at(i)[randint]).copyTo(bgcovars.at(i).at(j));
+                devs.at(neighbours.at(i)[randint]).copyTo(bgdevs.at(i).at(j));
             } else { //No neighbours found, just fill with self-values
                 avgs.at(i).copyTo(bgavgs.at(i).at(j));
-                covars.at(i).copyTo(bgcovars.at(i).at(j));
+                devs.at(i).copyTo(bgdevs.at(i).at(j));
             }
         }
     }
@@ -149,32 +157,20 @@ Mat superbe_engine::process_frame(Mat image_in, int waitTime) {
     process_vals(filt_img);
 
     Mat mask(height, width, CV_8UC1, Scalar(0)); //Initialise to zeros
-
-    int euc_dist;
-    double dissimilarity;
+    int euc_avg, euc_devs;
     for (int i=0;i<numSegments;i++) {
         //1) Compare pixel to background model
         int count = 0;
         int index = 0;
-
         while(count < numMin && index < N) {
-            //Calculate euclidean distance between averages
-            euc_dist = (int)round(norm(avgs.at(i), bgavgs.at(i).at(index)));
-
-            //Jensen-Bregman LogDet Divergence [Cherian et al, 2011] [Eq (7)] https://lear.inrialpes.fr/people/cherian/papers/metricICCV.pdf
-            //Use Cholesky factorisation to reduce computation
-            //https://stackoverflow.com/questions/30223101/jensen-bregman-logdet-divergence/30236092#30236092
-            Mat A, B, C;
-            Cholesky(covars.at(i), A);
-            Cholesky(bgcovars.at(i).at(index), B);
-            Cholesky((covars.at(i) + bgcovars.at(i).at(index))*0.5, C);
-            dissimilarity = abs(2*log(determinant(C)) - (log(determinant(A)) - log(determinant(B))));
-            //dissimilarity = log( determinant((covars.at(i)+bgcovars.at(i).at(index)) * 0.5) - 0.5*log(determinant(covars.at(i)*bgcovars.at(i).at(index))) );
+            //Calculate euclidean distance between averages and std deviations
+            euc_avg = (int)round(norm(avgs.at(i), bgavgs.at(i).at(index)));
+            euc_devs = (int)round(norm(devs.at(i), bgdevs.at(i).at(index)));
 
             //Check if enough similar samples have been found (if so, break)
-            //If the colour covariance and the mean colours are similar enough, it counts towards the background
-            if(euc_dist < R && (dissimilarity < DIS || !isfinite(dissimilarity))) {
-            //if(euc_dist < R && dissimilarity) {
+            //If the mean colours and std deviations are similar enough, it counts towards the background
+            //if(euc_avg < R && euc_devs < DIS) {
+            if(euc_avg < R) {
                 count++;
             }
             index++;
@@ -185,16 +181,16 @@ Mat superbe_engine::process_frame(Mat image_in, int waitTime) {
             //3) Update current pixel model
             randint = rand() % (N-1);
             avgs.at(i).copyTo(bgavgs.at(i).at(randint));
-            covars.at(i).copyTo(bgcovars.at(i).at(randint));
+            devs.at(i).copyTo(bgdevs.at(i).at(randint));
 
             //4) Update neighbouring superpixel model(s)
             randint = rand() % (phi-1);
             if (randint == 0) {
-                if (neighbours.at(i).size() != 0) {
+                if (neighbours.at(i).size() > 1) { //Can't select from self or less
                     rand_neigh = neighbours.at(i).at(rand() % (neighbours.at(i).size()-1));
                     rand_bgmodel = rand() % (N-1);
                     avgs.at(i).copyTo(bgavgs.at(rand_neigh).at(rand_bgmodel));
-                    covars.at(i).copyTo(bgcovars.at(rand_neigh).at(rand_bgmodel));
+                    devs.at(i).copyTo(bgdevs.at(rand_neigh).at(rand_bgmodel));
                 }
             }
         } else {

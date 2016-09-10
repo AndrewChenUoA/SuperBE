@@ -8,6 +8,8 @@
 #include <stdlib.h>
 #include "helper.h"
 
+#define EPSILON 1e-100
+
 using namespace cv;
 using namespace std;
 using namespace cv::ximgproc;
@@ -29,11 +31,11 @@ private:
     vector<vector<Vec3b> > segment_pixvals;
     vector<vector<int> > neighbours;
     vector<Mat> avgs;
-    vector<Mat> covars;
+    vector<Mat> devs;
 
     //Background Model
     vector<vector<Mat> > bgavgs; //Easier later to just keep these two separate
-    vector<vector<Mat> > bgcovars;
+    vector<vector<Mat> > bgdevs;
 
     Mat structOpen, structClose; //Structuring elements for morphological operations
 
