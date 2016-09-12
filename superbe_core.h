@@ -43,7 +43,7 @@ private:
     void process_vals(Mat);
 
 public:
-    void set_init(int, int, double, int, int, int);
+    void set_init(int, int, int, int, int, int);
     void initialise_background(String);
     void initialise_background(Mat);
     Mat process_frame(String, int);
