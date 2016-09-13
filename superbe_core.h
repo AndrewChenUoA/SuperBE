@@ -16,7 +16,8 @@ using namespace cv::ximgproc;
 
 class superbe_engine {
 private:
-    int N, R, DIS, numMin, phi, post;
+    int N, R, numMin, phi, post;
+    double DIS;
     int numSegments, height, width;
 
     int frameNumber;
@@ -28,11 +29,11 @@ private:
     vector<vector<Vec3b> > segment_pixvals;
     vector<vector<int> > neighbours;
     vector<Mat> avgs;
-    vector<Mat> devs;
+    vector<Mat> covars;
 
     //Background Model
     vector<vector<Mat> > bgavgs; //Easier later to just keep these two separate
-    vector<vector<Mat> > bgdevs;
+    vector<vector<Mat> > bgcovars;
 
     Mat structOpen, structClose; //Structuring elements for morphological operations
 
@@ -43,7 +44,7 @@ private:
     void process_vals(Mat);
 
 public:
-    void set_init(int, int, int, int, int, int);
+    void set_init(int, int, double, int, int, int);
     void initialise_background(String);
     void initialise_background(Mat);
     Mat process_frame(String, int);

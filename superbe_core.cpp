@@ -183,22 +183,12 @@ Mat superbe_engine::process_frame(Mat image_in, int waitTime) {
             detA = determinant(A);
             detB = determinant(B);
             detC = determinant(C);
-            dissimilarity = 2*log(isfinite(detC)&&detC!=0?detC:EPSILON) - log(isfinite(detA)&&detA!=0?detA:EPSILON) - log(isfinite(detB)&&detB!=0?detB:EPSILON);
+            dissimilarity = abs(2*log(isfinite(detC)&&detC!=0?detC:EPSILON) - log(isfinite(detA)&&detA!=0?detA:EPSILON) - log(isfinite(detB)&&detB!=0?detB:EPSILON));
             //dissimilarity = log( determinant((covars.at(i)+bgcovars.at(i).at(index)) * 0.5) - 0.5*log(determinant(covars.at(i)*bgcovars.at(i).at(index))) );
 
-            //cout << dissimilarity << "\n";
-            /*if (i==3010) {
-              cout << i << " ";
-              cout << dissimilarity << "\n";
-              cout << euc_dist << " ";
-              for(int j=0; j<segment_pixels.at(i).size(); j++) {
-                  segmented.at<Vec3b>(segment_pixels.at(i).at(j)) = Vec3b(255,0,0);
-              }
-            }*/
-
             //Check if enough similar samples have been found (if so, break)
-            //If the colour covariance and the mean (LAB) colours are similar enough, it counts towards the background
-            if(euc_dist < R && dissimilarity > DIS) {
+            //If the colour covariance and the mean colours are similar enough, it counts towards the background
+            if(euc_dist < R && dissimilarity < DIS) {
             //if(euc_dist < R) {
                 count++;
             }
@@ -215,7 +205,7 @@ Mat superbe_engine::process_frame(Mat image_in, int waitTime) {
             //4) Update neighbouring superpixel model(s)
             randint = rand() % (phi-1);
             if (randint == 0) {
-                if (neighbours.at(i).size() != 0) {
+                if (neighbours.at(i).size() > 1) { //Can't rand % 0
                     rand_neigh = neighbours.at(i).at(rand() % (neighbours.at(i).size()-1));
                     rand_bgmodel = rand() % (N-1);
                     avgs.at(i).copyTo(bgavgs.at(rand_neigh).at(rand_bgmodel));
