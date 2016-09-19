@@ -1,7 +1,10 @@
 # SuperBE
 Superpixel-level Background Estimation Algorithm
 
-Known to compile on Ubuntu 14.04
+This work is licensed under a Creative Commons [Attribution-Noncommercial-Sharealike 4.0 International License](https://creativecommons.org/licenses/by-nc-sa/4.0/).
+![CC-Attribution-Noncommercial-Sharealike-License](http://creativecommons.org.nz/wp-content/uploads/2012/05/by-nc-sa1.png)
+
+Known to compile on Ubuntu 14.04 and 16.04
 
 Dependencies:
 - OpenCV 3.1.0 including opencv_contrib (with corrected slic.cpp (https://github.com/opencv/opencv_contrib/pull/483))
